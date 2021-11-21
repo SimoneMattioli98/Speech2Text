@@ -1,0 +1,4 @@
+use_azure: true
+
+azure_storage_connectionstring: "DefaultEndpointsProtocol=https;AccountName=cristianofrstorage;AccountKey=wyLn4IPWOQLrYbkkOewxXrc0QnkmhRPmr++/yiK2CrkeiIbW96dfWuPgBzieTVlPCNQlOR00huwH4AHethOZ8Q==;EndpointSuffix=core.windows.net"
+azure_storage_container: "audio-speech2text"

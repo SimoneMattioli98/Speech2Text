@@ -1,0 +1,5 @@
+jonatas: "jonatasgrosman/wav2vec2-large-xlsr-53-italian"
+finetuned: "finetuning_jonata_ita_all_aug/final/"
+
+
+debug: True

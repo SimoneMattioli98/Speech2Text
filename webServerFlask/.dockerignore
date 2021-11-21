@@ -1,0 +1,5 @@
+**/*.pyc
+**/*.tmp
+/pyenv
+/.git
+**/__pycache__

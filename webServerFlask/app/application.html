@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebApp</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<div id="disclaimerDIV" style="display:block">
+    <h1>DISCLAIMER</h1>
+    <p>L'uso di questa applicazione è <b><u>assolutamente anonimo</u></b>.</p>
+    <p>Non verranno registrate informazioni che possano identificare, loggare, profilare o permettere di risalire in alcun modo all'utilizzatore.</p>
+    <p>L'unico scopo di questa applicazione è quello di creare un dataset di frasi lette per poter addestrare
+    adeguatamente un modello di intelligenza artificiale che sia in grado di trascrivere il parlato in testo.</p>
+    <p>&nbsp;</p>
+    <p>Grazie della collaborazione.</p>
+    <h4>Team R&D Maggioli</h4>
+    <p>&nbsp;</p>
+    <button onclick="okDisclaimer()">Premi per continuare</button>
+    <script>
+        function okDisclaimer() {
+            let x = document.getElementById("disclaimerDIV");
+            x.style.display="none";
+            x = document.getElementById("recorderDIV");
+            x.style.display="block";
+
+            getText();
+    }
+    </script>
+</div>
+<div id="recorderDIV" style="display:none">
+    <h1>Text To Read</h1>
+
+    <div style="background-color: #f0f0f0;">
+        <p>&nbsp;</p>
+        <h3 id="textToRead"></h3>
+        <p>&nbsp;</p>
+    </div>
+    <button onclick="getText()" id="btnLoad">Get A New Text</button>
+
+    <hr/>
+    <h1>Register Your Voice</h1>
+
+    <button id="btnStart" disabled>Start</button>
+    <button id="btnStop" disabled>Stop</button>
+    <br>
+    <audio id="audio"></audio>
+    <audio id="audioSave" controls></audio>
+    <br>
+    <button id="btnSend" disabled>Send</button>
+
+    <script>
+        //global variable for the sentence's id
+        var text_id = 0
+
+        function getText() {
+
+            let start = document.getElementById("btnStart");
+            let stop = document.getElementById("btnStop");
+            let send = document.getElementById("btnSend");
+            start.disabled = false;
+            stop.disabled = true;
+            send.disabled = true;
+
+            let audioSave = document.getElementById("audioSave");
+            audioSave.src = null;
+
+            //handle responses from the server
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    json = JSON.parse(this.responseText)
+                    document.getElementById("textToRead").innerHTML = json.sentence;
+                    text_id = json.id
+                }
+            };
+            //send get request to get the new sentence
+            xhttp.open("GET", document.URL + "text", true);
+            xhttp.send();
+        }
+
+        const audio = document.getElementById('audio');
+
+        const handleSuccess = function (stream) {
+
+            if (window.URL) {
+                audio.srcObject = stream;
+            } else {
+                audio.src = window.URL.createObjectURL(stream);
+            }
+
+            let start = document.getElementById("btnStart");
+            let stop = document.getElementById("btnStop");
+            let send = document.getElementById("btnSend");
+            let load_text = document.getElementById("btnLoad");
+            let audioSave = document.getElementById("audioSave");
+
+            let blob;
+
+            let mediaRecorder = new MediaRecorder(stream)
+            let chunks = [];
+
+
+            //starts the recording
+            start.addEventListener('click', (ev) => {
+                audioSave.src = null
+                start.disabled = true
+                stop.disabled = false
+                send.disabled = true
+                mediaRecorder.start();
+                console.log(mediaRecorder.state);
+            });
+
+            //stops the recording
+            stop.addEventListener('click', (ev) => {
+                start.disabled = false
+                stop.disabled = true
+                send.disabled = false
+                mediaRecorder.stop();
+                console.log(mediaRecorder.state);
+            });
+
+            //send the file audio to the server
+            send.addEventListener('click', (ev) => {
+                start.disabled = true
+                send.disabled = true
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    //simulates a click to the user does not read the same sentence
+                    if (this.readyState == 4 && this.status == 200) {
+                        load_text.click()
+                    }
+                };
+
+                //send a post request to the server with the file audio and the sentence's id
+                var fd = new FormData();
+                fd.append("text_id", text_id)
+                fd.append("audio_data", blob);
+                xhttp.open("POST", document.URL + "audio", true);
+                xhttp.send(fd);
+
+            });
+
+            //when data is recorded it is added to the array
+            mediaRecorder.ondataavailable = (ev) => {
+                chunks.push(ev.data)
+            }
+
+            //when recording is stopped the file audio is created
+            mediaRecorder.onstop = (ev) => {
+                blob = new Blob(chunks, {'type': 'audio/mp3'});
+                chunks = []
+                let audioURL = window.URL.createObjectURL(blob);
+                audioSave.src = audioURL
+            }
+
+        };
+
+        navigator.mediaDevices.getUserMedia({audio: true, video: false})
+            .then(handleSuccess);
+    </script>
+</div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+</html>
